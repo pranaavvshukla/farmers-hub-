@@ -1,0 +1,179 @@
+
+@baseUrl = http://127.0.0.1:5000
+
+### ==========================================
+### TEST 1: BACKEND HEALTH
+### ==========================================
+
+GET {{baseUrl}}/api/health
+
+
+### ==========================================
+### TEST 2: FARMER LOGIN
+### ==========================================
+
+# @name farmerLogin
+
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "farmer@test.com",
+  "password": "Farmer123"
+}
+
+
+### ==========================================
+### TEST 3: BUYER LOGIN
+### ==========================================
+
+# @name buyerLogin
+
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "buyer@test.com",
+  "password": "Buyer12345"
+}
+
+
+### ==========================================
+### TEST 4: FARMER PROFILE
+### ==========================================
+
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{farmerLogin.response.body.$.data.access_token}}
+
+
+### ==========================================
+### TEST 5: BUYER PROFILE
+### ==========================================
+
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{buyerLogin.response.body.$.data.access_token}}
+
+
+### ==========================================
+### TEST 6: FARMER ADDS PRODUCT
+### ==========================================
+
+# @name addProduct
+
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+Authorization: Bearer {{farmerLogin.response.body.$.data.access_token}}
+
+{
+  "name": "Fresh Red Tomatoes",
+  "category": "Vegetables",
+  "description": "Fresh farm-grown red tomatoes",
+  "price": 30,
+  "quantity": 500,
+  "unit": "kg",
+  "minimum_order": 5,
+  "state": "Chhattisgarh",
+  "district": "Raipur",
+  "location": "Raipur, Chhattisgarh",
+  "image_url": ""
+}
+
+
+### ==========================================
+### TEST 7: BUYER BROWSES PRODUCTS
+### ==========================================
+
+GET {{baseUrl}}/api/products
+
+
+### ==========================================
+### TEST 8: BUYER SEARCHES PRODUCTS
+### ==========================================
+
+GET {{baseUrl}}/api/products?search=Tomatoes
+
+
+### ==========================================
+### TEST 9: BUYER PLACES ORDER
+### ==========================================
+
+# @name placeOrder
+
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+Authorization: Bearer {{buyerLogin.response.body.$.data.access_token}}
+
+{
+  "product_id": {{addProduct.response.body.$.data.id}},
+  "quantity": 5,
+  "delivery_address": "Raipur, Chhattisgarh"
+}
+
+
+### ==========================================
+### TEST 10: FARMER CHECKS ORDERS
+### ==========================================
+
+GET {{baseUrl}}/api/orders
+Authorization: Bearer {{farmerLogin.response.body.$.data.access_token}}
+
+
+### ==========================================
+### TEST 11: FARMER ACCEPTS ORDER
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{placeOrder.response.body.$.data.id}}/status
+Content-Type: application/json
+Authorization: Bearer {{farmerLogin.response.body.$.data.access_token}}
+
+{
+  "status": "accepted"
+}
+
+
+### ==========================================
+### TEST 12: BUYER TRACKS ORDER
+### ==========================================
+
+GET {{baseUrl}}/api/orders
+Authorization: Bearer {{buyerLogin.response.body.$.data.access_token}}
+
+
+### ==========================================
+### TEST 13: FARMER COMPLETES ORDER
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{placeOrder.response.body.$.data.id}}/status
+Content-Type: application/json
+Authorization: Bearer {{farmerLogin.response.body.$.data.access_token}}
+
+{
+  "status": "completed"
+}
+
+
+### ==========================================
+### BUYER REQUIREMENTS / STATS / UPLOAD
+### ==========================================
+
+# @name buyerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "buyer@farmhub.test", "password": "farmhub123" }
+
+###
+# Public list (buyer phone hidden unless a farmer is logged in)
+GET {{baseUrl}}/api/requirements?district=Nagpur
+
+###
+POST {{baseUrl}}/api/requirements
+Authorization: Bearer {{buyerLogin.response.body.data.access_token}}
+Content-Type: application/json
+
+{ "product_name": "Mangoes", "category": "Fruits", "quantity": 200, "unit": "kg",
+  "min_price": 50, "max_price": 80, "needed_within_days": 7 }
+
+###
+GET {{baseUrl}}/api/stats
+Authorization: Bearer {{buyerLogin.response.body.data.access_token}}

@@ -1,0 +1,34 @@
+# Render Blueprint: one click deploy of backend + frontend.
+# Dashboard -> New -> Blueprint -> pick this repo.
+# After the first deploy, set the two URL variables marked "sync: false".
+services:
+  - type: web
+    name: farmhub-api
+    runtime: python
+    rootDir: farmhub/backend
+    buildCommand: pip install -r requirements-prod.txt
+    startCommand: gunicorn app:app
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: SEED_DEMO
+        value: "1"
+      - key: DATABASE_URL        # paste a free Postgres URL (Neon/Supabase/Render DB)
+        sync: false
+      - key: FRONTEND_URL        # your frontend URL, e.g. https://farmhub.onrender.com
+        sync: false
+
+  - type: web
+    name: farmhub
+    runtime: static
+    rootDir: farmhub
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL        # your backend URL, e.g. https://farmhub-api.onrender.com
+        sync: false
